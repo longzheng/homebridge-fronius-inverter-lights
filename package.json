@@ -1,0 +1,41 @@
+{
+  "name": "homebridge-fronius-inverter-lights",
+  "version": "1.0.0",
+  "description": "Homebridge plugin for Fronius inverter with smart meter as a lightbulb accessory",
+  "main": "dist/fronius-platform.js",
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Long Zheng",
+  "engines": {
+    "homebridge": ">=1.0.0"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "license": "ISC",
+  "files": [
+    "LICENSE",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/longzheng/homebridge-fronius-inverter-lights.git"
+  },
+  "bugs": {
+    "url": "http://github.com/longzheng/homebridge-fronius-inverter-lights/issues"
+  },
+  "devDependencies": {
+    "@types/node": "10.17.19",
+    "homebridge": "^1.0.4",
+    "rimraf": "^3.0.2",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "axios": "^0.19.2"
+  }
+}
