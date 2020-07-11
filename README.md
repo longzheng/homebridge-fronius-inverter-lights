@@ -17,7 +17,7 @@
         {
             "name": "Fronius inverter",
             "platform": "FroniusInverterLightsPlatform",
-			"inverterIp": "192.168.1.124", // IP address of your Fronius inverter
+            "inverterIp": "192.168.1.124", // IP address of your Fronius inverter
             "pollInterval": 2 // polling frequency, in seconds
         },
 
