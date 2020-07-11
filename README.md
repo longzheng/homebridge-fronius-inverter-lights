@@ -3,8 +3,8 @@
 
 ## Screenshots
 
-![image](https://github.com/longzheng/homebridge-fronius-inverter-lights/blob/master/docs/screenshot1.png)
-![image](https://github.com/longzheng/homebridge-fronius-inverter-lights/blob/master/docs/screenshot2.png)
+![image](https://raw.githubusercontent.com/longzheng/homebridge-fronius-inverter-lights/master/docs/screenshot1.PNG)
+![image](https://raw.githubusercontent.com/longzheng/homebridge-fronius-inverter-lights/master/docs/screenshot2.PNG)
 
 ## Homebridge config
 
