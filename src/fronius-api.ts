@@ -1,25 +1,30 @@
-import axios, { AxiosInstance } from "axios"
+import { Logging } from "homebridge";
+import axios, { AxiosInstance } from "axios";
 
 export class FroniusApi {
-	private http: AxiosInstance;
-	private inverterIp: string;
+  private readonly http: AxiosInstance;
+  private readonly inverterIp: string;
+  private readonly log: Logging;
 
-	constructor(inverterIp: string) {
-		this.inverterIp = inverterIp;
+  constructor(inverterIp: string, log: Logging) {
+	this.inverterIp = inverterIp;
+	this.log = log;
 
-		this.http = axios.create({
-			timeout: 2000,
-		});
-	}
+    this.http = axios.create({
+      timeout: 2000,
+    });
+  }
 
-	public getInverterData = async () => {
-		try {
-			return await this.http.get(
-				"http://" + this.inverterIp + "/solar_api/v1/GetPowerFlowRealtimeData.fcgi"
-			);
-		} catch (error) {
-			console.error(error);
-			return null;
-		}
-	};
+  public getInverterData = async () => {
+    try {
+      return await this.http.get(
+        "http://" +
+          this.inverterIp +
+          "/solar_api/v1/GetPowerFlowRealtimeData.fcgi"
+      );
+    } catch (error) {
+      this.log.error(error);
+      return null;
+    }
+  };
 }

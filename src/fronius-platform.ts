@@ -44,7 +44,7 @@ class ExampleStaticPlatform implements StaticPlatformPlugin {
     this.log = log;
 
     // probably parse config or something here
-    this.froniusApi = new FroniusApi(config.inverterIp);
+    this.froniusApi = new FroniusApi(config.inverterIp, this.log);
     this.pollInterval = config.pollInterval || 10;
   }
 
