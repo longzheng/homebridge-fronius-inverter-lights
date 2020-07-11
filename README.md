@@ -10,6 +10,12 @@
 
 <img src="https://raw.githubusercontent.com/longzheng/homebridge-fronius-inverter-lights/master/docs/screenshot1.PNG" width="400"><img src="https://raw.githubusercontent.com/longzheng/homebridge-fronius-inverter-lights/master/docs/screenshot2.PNG" width="400">
 
+## Install
+
+```
+npm i -g homebridge-fronius-inverter-lights@latest
+```
+
 ## Homebridge config
 
 ```
