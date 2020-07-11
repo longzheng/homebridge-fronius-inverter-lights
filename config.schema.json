@@ -1,0 +1,22 @@
+{
+  "pluginAlias": "FroniusInverterLightsPlatform",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "inverterIp": {
+        "title": "Inverter IP",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "pollInterval": {
+        "title": "Polling interval (seconds)",
+        "type": "integer",
+        "required": true,
+        "default": 10
+      }
+    }
+  }
+}

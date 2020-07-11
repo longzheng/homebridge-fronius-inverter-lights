@@ -4,11 +4,10 @@
   "description": "Homebridge plugin for Fronius inverter with smart meter as a lightbulb accessory",
   "main": "dist/fronius-platform.js",
   "scripts": {
-    "clean": "rimraf ./dist",
+    "lint": "eslint src/**.ts",
+    "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "npm run build",
-    "postpublish": "npm run clean",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run lint && npm run build"
   },
   "author": "Long Zheng",
   "engines": {
@@ -18,10 +17,6 @@
     "homebridge-plugin"
   ],
   "license": "ISC",
-  "files": [
-    "LICENSE",
-    "dist"
-  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/longzheng/homebridge-fronius-inverter-lights.git"
@@ -30,10 +25,15 @@
     "url": "http://github.com/longzheng/homebridge-fronius-inverter-lights/issues"
   },
   "devDependencies": {
-    "@types/node": "10.17.19",
-    "homebridge": "^1.0.4",
+    "@types/node": "^14.0.14",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "eslint": "^7.3.1",
+    "homebridge": "^1.1.1",
+    "nodemon": "^2.0.4",
     "rimraf": "^3.0.2",
-    "typescript": "^3.8.3"
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
   },
   "dependencies": {
     "axios": "^0.19.2"

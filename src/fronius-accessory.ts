@@ -7,17 +7,17 @@ import {
   Logging,
   Service,
   CharacteristicEventTypes,
-} from "homebridge";
-import { FroniusApi } from "./fronius-api";
+} from 'homebridge';
+import { FroniusApi } from './fronius-api';
 
 export enum Metering {
-  Import = "Import",
-  Export = "Export",
+  Import = 'Import',
+  Export = 'Export',
 }
 
-const GridProperty = "P_Grid";
-const AutonomyProperty = "rel_Autonomy";
-const SelfConsumptionProperty = "rel_SelfConsumption";
+const GridProperty = 'P_Grid';
+const AutonomyProperty = 'rel_Autonomy';
+const SelfConsumptionProperty = 'rel_SelfConsumption';
 
 export class FroniusAccessory implements AccessoryPlugin {
   private readonly log: Logging;
@@ -29,16 +29,16 @@ export class FroniusAccessory implements AccessoryPlugin {
   private readonly hap: HAP;
   private readonly metering: Metering;
   private readonly pollInterval: number;
-  private onValue: boolean = false;
-  private brightnessValue: number = 0;
-  private luxValue: number = 0;
+  private onValue = false;
+  private brightnessValue = 0;
+  private luxValue = 0;
 
   constructor(
     hap: HAP,
     log: Logging,
     metering: Metering,
     froniusApi: FroniusApi,
-    pollInterval: number
+    pollInterval: number,
   ) {
     this.hap = hap;
     this.log = log;
@@ -58,18 +58,18 @@ export class FroniusAccessory implements AccessoryPlugin {
           await this.updateValues();
 
           callback(undefined, this.brightnessValue);
-        }
+        },
       )
       .on(
         CharacteristicEventTypes.SET,
         async (
           value: CharacteristicValue,
-          callback: CharacteristicSetCallback
+          callback: CharacteristicSetCallback,
         ) => {
           await this.updateValues();
 
           callback(undefined, this.brightnessValue);
-        }
+        },
       );
 
     this.lightbulbService
@@ -80,18 +80,18 @@ export class FroniusAccessory implements AccessoryPlugin {
           await this.updateValues();
 
           callback(undefined, this.onValue);
-        }
+        },
       )
       .on(
         CharacteristicEventTypes.SET,
         async (
           value: CharacteristicValue,
-          callback: CharacteristicSetCallback
+          callback: CharacteristicSetCallback,
         ) => {
           await this.updateValues();
 
           callback(undefined, this.onValue);
-        }
+        },
       );
 
     this.lightsensorService
@@ -102,15 +102,15 @@ export class FroniusAccessory implements AccessoryPlugin {
           await this.updateValues();
 
           callback(undefined, this.luxValue);
-        }
+        },
       )
       .setProps({
         minValue: 0, // allow minimum lux to be 0, otherwise defaults to 0.0001
       });
 
     this.informationService = new hap.Service.AccessoryInformation()
-      .setCharacteristic(hap.Characteristic.Manufacturer, "Custom Manufacturer")
-      .setCharacteristic(hap.Characteristic.Model, "Custom Model");
+      .setCharacteristic(hap.Characteristic.Manufacturer, 'Custom Manufacturer')
+      .setCharacteristic(hap.Characteristic.Model, 'Custom Model');
   }
 
   /*
@@ -130,7 +130,7 @@ export class FroniusAccessory implements AccessoryPlugin {
   }
 
   async updateValues() {
-    let data = await this.getInverterData();
+    const data = await this.getInverterData();
 
     if (data) {
       const gridValue = data[GridProperty];
@@ -146,8 +146,8 @@ export class FroniusAccessory implements AccessoryPlugin {
           ? gridValue
           : 0 // import watts, value must be positive
         : gridValue < 0
-        ? -gridValue
-        : 0; // export watts, value must be negative
+          ? -gridValue
+          : 0; // export watts, value must be negative
     } else {
       this.onValue = false;
       this.brightnessValue = 0;
@@ -182,7 +182,7 @@ export class FroniusAccessory implements AccessoryPlugin {
       },
       (error) => {
         return null;
-      }
+      },
     );
   }
 }
