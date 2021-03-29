@@ -23,7 +23,9 @@ export class FroniusApi {
           '/solar_api/v1/GetPowerFlowRealtimeData.fcgi',
       );
     } catch (error) {
-      this.log.error(error);
+      if (error instanceof Error) {
+        this.log.error(error.message);
+      }
       return null;
     }
   };
