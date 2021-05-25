@@ -1,4 +1,11 @@
-import { AccessoryPlugin, API, HAP, Logging, PlatformConfig, StaticPlatformPlugin } from 'homebridge';
+import {
+  AccessoryPlugin,
+  API,
+  HAP,
+  Logging,
+  PlatformConfig,
+  StaticPlatformPlugin,
+} from 'homebridge';
 import { FroniusAccessory, Metering } from './fronius-accessory';
 import { FroniusApi } from './fronius-api';
 
@@ -12,7 +19,6 @@ export = (api: API) => {
 };
 
 class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
-
   private readonly log: Logging;
   private readonly froniusApi: FroniusApi;
   private readonly pollInterval: number;
@@ -33,11 +39,34 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
-      new FroniusAccessory(hap, this.log, Metering.Import, this.froniusApi, this.pollInterval),
-      new FroniusAccessory(hap, this.log, Metering.Export, this.froniusApi, this.pollInterval),
-      new FroniusAccessory(hap, this.log, Metering.Load, this.froniusApi, this.pollInterval),
-      new FroniusAccessory(hap, this.log, Metering.PV, this.froniusApi, this.pollInterval),
+      new FroniusAccessory(
+        hap,
+        this.log,
+        Metering.Import,
+        this.froniusApi,
+        this.pollInterval,
+      ),
+      new FroniusAccessory(
+        hap,
+        this.log,
+        Metering.Export,
+        this.froniusApi,
+        this.pollInterval,
+      ),
+      new FroniusAccessory(
+        hap,
+        this.log,
+        Metering.Load,
+        this.froniusApi,
+        this.pollInterval,
+      ),
+      new FroniusAccessory(
+        hap,
+        this.log,
+        Metering.PV,
+        this.froniusApi,
+        this.pollInterval,
+      ),
     ]);
   }
-
 }
