@@ -1,5 +1,6 @@
 import { Logging } from 'homebridge';
 import axios, { AxiosInstance } from 'axios';
+import { setupCache } from 'axios-cache-adapter';
 
 export class FroniusApi {
   private readonly http: AxiosInstance;
@@ -10,8 +11,15 @@ export class FroniusApi {
     this.inverterIp = inverterIp;
     this.log = log;
 
+    // cache API responses for 1 second
+    const cache = setupCache({
+      maxAge: 1 * 1000,
+    });
+    
+
     this.http = axios.create({
       timeout: 2000,
+      adapter: cache.adapter,
     });
   }
 
