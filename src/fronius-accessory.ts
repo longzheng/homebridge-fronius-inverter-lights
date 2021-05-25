@@ -48,32 +48,27 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.lightbulbService = new hap.Service.Lightbulb(this.name);
     this.lightsensorService = new hap.Service.LightSensor(this.name);
 
-    if (
-      this.metering === Metering.Export ||
-      this.metering === Metering.Import
-    ) {
-      this.lightbulbService
-        .getCharacteristic(hap.Characteristic.Brightness)
-        .on(
-          CharacteristicEventTypes.GET,
-          async (callback: CharacteristicGetCallback) => {
-            await this.updateValues();
+    this.lightbulbService
+      .getCharacteristic(hap.Characteristic.Brightness)
+      .on(
+        CharacteristicEventTypes.GET,
+        async (callback: CharacteristicGetCallback) => {
+          await this.updateValues();
 
-            callback(undefined, this.brightnessValue);
-          },
-        )
-        .on(
-          CharacteristicEventTypes.SET,
-          async (
-            value: CharacteristicValue,
-            callback: CharacteristicSetCallback,
-          ) => {
-            await this.updateValues();
+          callback(undefined, this.brightnessValue);
+        },
+      )
+      .on(
+        CharacteristicEventTypes.SET,
+        async (
+          value: CharacteristicValue,
+          callback: CharacteristicSetCallback,
+        ) => {
+          await this.updateValues();
 
-            callback(undefined, this.brightnessValue);
-          },
-        );
-    }
+          callback(undefined, this.brightnessValue);
+        },
+      );
 
     this.lightbulbService
       .getCharacteristic(hap.Characteristic.On)
@@ -159,12 +154,14 @@ export class FroniusAccessory implements AccessoryPlugin {
         }
         case Metering.Load: {
           const loadValue = Math.abs(data.P_Load);
+          this.brightnessValue = 100;
           this.onValue = loadValue > 0;
           this.luxValue = loadValue;
           break;
         }
         case Metering.PV: {
           const pvValue = data.P_PV;
+          this.brightnessValue = 100;
           this.onValue = pvValue !== null;
           this.luxValue = pvValue ?? 0;
           break;
