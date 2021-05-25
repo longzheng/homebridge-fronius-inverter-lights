@@ -35,6 +35,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
     callback([
       new FroniusAccessory(hap, this.log, Metering.Import, this.froniusApi, this.pollInterval),
       new FroniusAccessory(hap, this.log, Metering.Export, this.froniusApi, this.pollInterval),
+      new FroniusAccessory(hap, this.log, Metering.Load, this.froniusApi, this.pollInterval),
+      new FroniusAccessory(hap, this.log, Metering.PV, this.froniusApi, this.pollInterval),
     ]);
   }
 

@@ -13,11 +13,9 @@ import { FroniusApi } from './fronius-api';
 export enum Metering {
   Import = 'Import',
   Export = 'Export',
+  Load = 'Load',
+  PV = 'PV',
 }
-
-const GridProperty = 'P_Grid';
-const AutonomyProperty = 'rel_Autonomy';
-const SelfConsumptionProperty = 'rel_SelfConsumption';
 
 export class FroniusAccessory implements AccessoryPlugin {
   private readonly log: Logging;
@@ -50,27 +48,32 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.lightbulbService = new hap.Service.Lightbulb(this.name);
     this.lightsensorService = new hap.Service.LightSensor(this.name);
 
-    this.lightbulbService
-      .getCharacteristic(hap.Characteristic.Brightness)
-      .on(
-        CharacteristicEventTypes.GET,
-        async (callback: CharacteristicGetCallback) => {
-          await this.updateValues();
+    if (
+      this.metering === Metering.Export ||
+      this.metering === Metering.Import
+    ) {
+      this.lightbulbService
+        .getCharacteristic(hap.Characteristic.Brightness)
+        .on(
+          CharacteristicEventTypes.GET,
+          async (callback: CharacteristicGetCallback) => {
+            await this.updateValues();
 
-          callback(undefined, this.brightnessValue);
-        },
-      )
-      .on(
-        CharacteristicEventTypes.SET,
-        async (
-          value: CharacteristicValue,
-          callback: CharacteristicSetCallback,
-        ) => {
-          await this.updateValues();
+            callback(undefined, this.brightnessValue);
+          },
+        )
+        .on(
+          CharacteristicEventTypes.SET,
+          async (
+            value: CharacteristicValue,
+            callback: CharacteristicSetCallback,
+          ) => {
+            await this.updateValues();
 
-          callback(undefined, this.brightnessValue);
-        },
-      );
+            callback(undefined, this.brightnessValue);
+          },
+        );
+    }
 
     this.lightbulbService
       .getCharacteristic(hap.Characteristic.On)
@@ -133,21 +136,40 @@ export class FroniusAccessory implements AccessoryPlugin {
     const data = await this.getInverterData();
 
     if (data) {
-      const gridValue = data[GridProperty];
-      const autonomyValue = data[AutonomyProperty];
-      const selfConsumptionValue = data[SelfConsumptionProperty] || 100;
-      const isImport = this.metering === Metering.Import;
+      switch (this.metering) {
+        case Metering.Export:
+        case Metering.Import: {
+          const gridValue = data.P_Grid;
+          const autonomyValue = data.rel_Autonomy;
+          const selfConsumptionValue = data.rel_SelfConsumption || 100;
+          const isImport = this.metering === Metering.Import;
 
-      this.onValue = (isImport ? autonomyValue : selfConsumptionValue) < 100; // on/off is calculated whether autonomy/selfConsumption is less than 100
-      this.brightnessValue =
-        100 - (isImport ? autonomyValue : selfConsumptionValue); // percentage of import/export is calculated from 100 - autonomy/selfConsumption
-      this.luxValue = isImport
-        ? gridValue > 0
-          ? gridValue
-          : 0 // import watts, value must be positive
-        : gridValue < 0
-          ? -gridValue
-          : 0; // export watts, value must be negative
+          this.onValue =
+            (isImport ? autonomyValue : selfConsumptionValue) < 100; // on/off is calculated whether autonomy/selfConsumption is less than 100
+          this.brightnessValue =
+            100 - (isImport ? autonomyValue : selfConsumptionValue); // percentage of import/export is calculated from 100 - autonomy/selfConsumption
+          this.luxValue = isImport
+            ? gridValue > 0
+              ? gridValue
+              : 0 // import watts, value must be positive
+            : gridValue < 0
+              ? -gridValue
+              : 0; // export watts, value must be negative
+          break;
+        }
+        case Metering.Load: {
+          const loadValue = Math.abs(data.P_Load);
+          this.onValue = loadValue > 0;
+          this.luxValue = loadValue;
+          break;
+        }
+        case Metering.PV: {
+          const pvValue = data.P_PV;
+          this.onValue = pvValue !== null;
+          this.luxValue = pvValue ?? 0;
+          break;
+        }
+      }
     } else {
       this.onValue = false;
       this.brightnessValue = 0;
