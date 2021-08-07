@@ -1,13 +1,4 @@
-import {
-  AccessoryPlugin,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  HAP,
-  Logging,
-  Service,
-  CharacteristicEventTypes,
-} from 'homebridge';
+import { AccessoryPlugin, HAP, Logging, Service } from 'homebridge';
 import { FroniusApi } from './fronius-api';
 
 export enum Metering {
@@ -27,9 +18,9 @@ export class FroniusAccessory implements AccessoryPlugin {
   private readonly hap: HAP;
   private readonly metering: Metering;
   private readonly pollInterval: number;
-  private onValue = false;
-  private brightnessValue = 0;
-  private luxValue = 0;
+  private onValue: boolean | Error = false;
+  private brightnessValue: number | Error = 0;
+  private luxValue: number | Error = 0;
 
   constructor(
     hap: HAP,
@@ -48,67 +39,15 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.lightbulbService = new hap.Service.Lightbulb(this.name);
     this.lightsensorService = new hap.Service.LightSensor(this.name);
 
-    this.lightbulbService
-      .getCharacteristic(hap.Characteristic.Brightness)
-      .on(
-        CharacteristicEventTypes.GET,
-        async (callback: CharacteristicGetCallback) => {
-          await this.updateValues();
-
-          callback(undefined, this.brightnessValue);
-        },
-      )
-      .on(
-        CharacteristicEventTypes.SET,
-        async (
-          value: CharacteristicValue,
-          callback: CharacteristicSetCallback,
-        ) => {
-          await this.updateValues();
-
-          callback(undefined, this.brightnessValue);
-        },
-      );
-
-    this.lightbulbService
-      .getCharacteristic(hap.Characteristic.On)
-      .on(
-        CharacteristicEventTypes.GET,
-        async (callback: CharacteristicGetCallback) => {
-          await this.updateValues();
-
-          callback(undefined, this.onValue);
-        },
-      )
-      .on(
-        CharacteristicEventTypes.SET,
-        async (
-          value: CharacteristicValue,
-          callback: CharacteristicSetCallback,
-        ) => {
-          await this.updateValues();
-
-          callback(undefined, this.onValue);
-        },
-      );
-
     this.lightsensorService
       .getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
-      .on(
-        CharacteristicEventTypes.GET,
-        async (callback: CharacteristicGetCallback) => {
-          await this.updateValues();
-
-          callback(undefined, this.luxValue);
-        },
-      )
       .setProps({
         minValue: 0, // allow minimum lux to be 0, otherwise defaults to 0.0001
       });
 
     this.informationService = new hap.Service.AccessoryInformation()
-      .setCharacteristic(hap.Characteristic.Manufacturer, 'Custom Manufacturer')
-      .setCharacteristic(hap.Characteristic.Model, 'Custom Model');
+      .setCharacteristic(hap.Characteristic.Manufacturer, 'Fronius')
+      .setCharacteristic(hap.Characteristic.Model, 'Inverter');
   }
 
   /*
@@ -120,6 +59,9 @@ export class FroniusAccessory implements AccessoryPlugin {
       await this.scheduledUpdate();
     }, this.pollInterval * 1000);
 
+    // run immediately too
+    this.scheduledUpdate();
+
     return [
       this.informationService,
       this.lightbulbService,
@@ -128,7 +70,7 @@ export class FroniusAccessory implements AccessoryPlugin {
   }
 
   async updateValues() {
-    const data = await this.getInverterData();
+    const data = await this.froniusApi.getInverterData();
 
     if (data) {
       switch (this.metering) {
@@ -168,9 +110,9 @@ export class FroniusAccessory implements AccessoryPlugin {
         }
       }
     } else {
-      this.onValue = false;
-      this.brightnessValue = 0;
-      this.luxValue = 0;
+      this.onValue = new Error('Error fetching value');
+      this.brightnessValue = new Error('Error fetching value');
+      this.luxValue = new Error('Error fetching value');
     }
   }
 
@@ -188,20 +130,5 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.lightsensorService
       .getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel)
       .updateValue(this.luxValue);
-  }
-
-  getInverterData() {
-    return this.froniusApi.getInverterData().then(
-      (result) => {
-        if (result) {
-          return result.data.Body.Data.Site;
-        } else {
-          return null;
-        }
-      },
-      (error) => {
-        return null;
-      },
-    );
   }
 }

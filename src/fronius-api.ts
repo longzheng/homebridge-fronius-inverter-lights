@@ -6,6 +6,7 @@ export class FroniusApi {
   private readonly http: AxiosInstance;
   private readonly inverterIp: string;
   private readonly log: Logging;
+  private request: Promise<Site | null> | undefined; // cache the current request to prevent concurrent requests
 
   constructor(inverterIp: string, log: Logging) {
     this.inverterIp = inverterIp;
@@ -15,7 +16,6 @@ export class FroniusApi {
     const cache = setupCache({
       maxAge: 1 * 1000,
     });
-    
 
     this.http = axios.create({
       timeout: 2000,
@@ -24,18 +24,39 @@ export class FroniusApi {
   }
 
   public getInverterData = async () => {
-    try {
-      return await this.http.get<FroniusRealtimeData>(
-        'http://' +
-          this.inverterIp +
-          '/solar_api/v1/GetPowerFlowRealtimeData.fcgi',
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        this.log.error(error.message);
-      }
-      return null;
+    // if request is already in operation, return the previous request
+    if (this.request) {
+      return this.request;
     }
+
+    this.request = new Promise((resolve) => {
+      const url = `http://${this.inverterIp}/solar_api/v1/GetPowerFlowRealtimeData.fcgi`;
+
+      this.log.debug(`Getting inverter data: ${url}`);
+
+      this.http
+        .get<FroniusRealtimeData>(url)
+        .then((response) => {
+          // clear existing request
+          this.request = undefined;
+
+          if (response.status === 200) {
+            return resolve(response.data.Body.Data.Site);
+          } else {
+            this.log.error(`Received invalid status code: ${response.status}`);
+
+            return resolve(null);
+          }
+        })
+        .catch((error: Error) => {
+          this.log.error(error.message);
+
+          this.request = undefined;
+          return resolve(null);
+        });
+    });
+
+    return this.request;
   };
 }
 
