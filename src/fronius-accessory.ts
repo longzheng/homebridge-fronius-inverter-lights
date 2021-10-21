@@ -48,6 +48,13 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.informationService = new hap.Service.AccessoryInformation()
       .setCharacteristic(hap.Characteristic.Manufacturer, 'Fronius')
       .setCharacteristic(hap.Characteristic.Model, 'Inverter');
+
+    setInterval(async () => {
+      await this.scheduledUpdate();
+    }, this.pollInterval * 1000);
+
+    // run immediately too
+    this.scheduledUpdate();
   }
 
   /*
@@ -55,13 +62,6 @@ export class FroniusAccessory implements AccessoryPlugin {
    * It should return all services which should be added to the accessory.
    */
   getServices(): Service[] {
-    setInterval(async () => {
-      await this.scheduledUpdate();
-    }, this.pollInterval * 1000);
-
-    // run immediately too
-    this.scheduledUpdate();
-
     return [
       this.informationService,
       this.lightbulbService,
