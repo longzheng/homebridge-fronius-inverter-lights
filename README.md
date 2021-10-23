@@ -2,10 +2,10 @@
  Homebridge plugin for Fronius inverter with smart meter as a lightbulb accessory
  
 - Adds lightbulb accessories
- - Export - net export
- - Import - net import
- - Load - the amount of grid load
- - PV - the amount of solar generation
+  - Export - net export
+  - Import - net import
+  - Load - the amount of grid load
+  - PV - the amount of solar generation
 - Lightbulb brightness percentage represents how much of the import/export relative to the solar generation
 - Lightbulb brightness lux represents how many watts
 
