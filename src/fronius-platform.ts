@@ -6,6 +6,7 @@ import {
   PlatformConfig,
   StaticPlatformPlugin,
 } from 'homebridge';
+import { Config } from './config';
 import { FroniusAccessory, Metering } from './fronius-accessory';
 import { FroniusApi } from './fronius-api';
 
@@ -26,9 +27,11 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   constructor(log: Logging, config: PlatformConfig, api: API) {
     this.log = log;
 
+    const pluginConfig = config as unknown as Config;
+
     // probably parse config or something here
-    this.froniusApi = new FroniusApi(config.inverterIp, this.log);
-    this.pollInterval = config.pollInterval || 10;
+    this.froniusApi = new FroniusApi(pluginConfig.inverterIp, this.log);
+    this.pollInterval = pluginConfig.pollInterval || 10;
   }
 
   /*
