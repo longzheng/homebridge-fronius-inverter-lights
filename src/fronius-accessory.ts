@@ -1,12 +1,7 @@
 import { AccessoryPlugin, HAP, Logging, Service } from 'homebridge';
 import { FroniusApi } from './fronius-api';
 
-export enum Metering {
-  Import = 'Import',
-  Export = 'Export',
-  Load = 'Load',
-  PV = 'PV',
-}
+export type Metering = 'Import' | 'Export' | 'Load' | 'PV';
 
 export class FroniusAccessory implements AccessoryPlugin {
   private readonly log: Logging;
@@ -18,6 +13,8 @@ export class FroniusAccessory implements AccessoryPlugin {
   private readonly hap: HAP;
   private readonly metering: Metering;
   private readonly pollInterval: number;
+  private readonly pvMaxPower?: number;
+
   private onValue: boolean | Error = false;
   private brightnessValue: number | Error = 0;
   private luxValue: number | Error = 0;
@@ -28,6 +25,7 @@ export class FroniusAccessory implements AccessoryPlugin {
     metering: Metering,
     froniusApi: FroniusApi,
     pollInterval: number,
+    pvMaxPower?: number,
   ) {
     this.hap = hap;
     this.log = log;
@@ -35,6 +33,7 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.froniusApi = froniusApi;
     this.metering = metering;
     this.pollInterval = pollInterval;
+    this.pvMaxPower = pvMaxPower;
 
     this.lightbulbService = new hap.Service.Lightbulb(this.name);
     this.lightsensorService = new hap.Service.LightSensor(this.name);
@@ -74,12 +73,12 @@ export class FroniusAccessory implements AccessoryPlugin {
 
     if (data) {
       switch (this.metering) {
-        case Metering.Export:
-        case Metering.Import: {
+        case 'Export':
+        case 'Import': {
           const gridValue = data.P_Grid;
           const autonomyValue = data.rel_Autonomy;
           const selfConsumptionValue = data.rel_SelfConsumption || 100;
-          const isImport = this.metering === Metering.Import;
+          const isImport = this.metering === 'Import';
 
           this.onValue =
             (isImport ? autonomyValue : selfConsumptionValue) < 100; // on/off is calculated whether autonomy/selfConsumption is less than 100
@@ -94,16 +93,18 @@ export class FroniusAccessory implements AccessoryPlugin {
               : 0; // export watts, value must be negative
           break;
         }
-        case Metering.Load: {
+        case 'Load': {
           const loadValue = Math.abs(data.P_Load);
           this.brightnessValue = 100;
           this.onValue = loadValue > 0;
           this.luxValue = loadValue;
           break;
         }
-        case Metering.PV: {
+        case 'PV': {
           const pvValue = data.P_PV;
-          this.brightnessValue = 100;
+          this.brightnessValue = this.pvMaxPower
+            ? ((pvValue ?? 0) / this.pvMaxPower) * 100
+            : 100;
           this.onValue = pvValue !== null;
           this.luxValue = pvValue ?? 0;
           break;

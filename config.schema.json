@@ -9,13 +9,20 @@
         "title": "Inverter IP",
         "type": "string",
         "required": true,
-        "default": ""
+        "placeholder": "192.168.1.123"
       },
       "pollInterval": {
         "title": "Polling interval (seconds)",
         "type": "integer",
         "required": true,
         "default": 10
+      },
+      "pvMaxPower": {
+        "title": "PV max power capacity (watts)",
+        "description": "If configured, shows the PV lightbulb brightness % as a proportion to the max PV capacity",
+        "type": "integer",
+        "required": false,
+        "placeholder": "6000"
       }
     }
   }

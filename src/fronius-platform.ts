@@ -7,7 +7,7 @@ import {
   StaticPlatformPlugin,
 } from 'homebridge';
 import { Config } from './config';
-import { FroniusAccessory, Metering } from './fronius-accessory';
+import { FroniusAccessory } from './fronius-accessory';
 import { FroniusApi } from './fronius-api';
 
 const PLATFORM_NAME = 'FroniusInverterLightsPlatform';
@@ -23,6 +23,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   private readonly log: Logging;
   private readonly froniusApi: FroniusApi;
   private readonly pollInterval: number;
+  private readonly pvMaxPower?: number;
 
   constructor(log: Logging, config: PlatformConfig, api: API) {
     this.log = log;
@@ -32,6 +33,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
     // probably parse config or something here
     this.froniusApi = new FroniusApi(pluginConfig.inverterIp, this.log);
     this.pollInterval = pluginConfig.pollInterval || 10;
+    this.pvMaxPower = pluginConfig.pvMaxPower;
   }
 
   /*
@@ -45,30 +47,31 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
       new FroniusAccessory(
         hap,
         this.log,
-        Metering.Import,
+        'Import',
         this.froniusApi,
         this.pollInterval,
       ),
       new FroniusAccessory(
         hap,
         this.log,
-        Metering.Export,
+        'Export',
         this.froniusApi,
         this.pollInterval,
       ),
       new FroniusAccessory(
         hap,
         this.log,
-        Metering.Load,
+        'Load',
         this.froniusApi,
         this.pollInterval,
       ),
       new FroniusAccessory(
         hap,
         this.log,
-        Metering.PV,
+        'PV',
         this.froniusApi,
         this.pollInterval,
+        this.pvMaxPower,
       ),
     ]);
   }
