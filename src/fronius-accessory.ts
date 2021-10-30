@@ -103,7 +103,10 @@ export class FroniusAccessory implements AccessoryPlugin {
         case 'PV': {
           const pvValue = data.P_PV;
           this.brightnessValue = this.pvMaxPower
-            ? ((pvValue ?? 0) / this.pvMaxPower) * 100
+            ? Math.min(
+              ((pvValue ?? 0) / this.pvMaxPower) * 100, // calculate PV output as a percentage of PV max power
+              100,
+            ) // cap to 100%
             : 100;
           this.onValue = pvValue !== null;
           this.luxValue = pvValue ?? 0;
