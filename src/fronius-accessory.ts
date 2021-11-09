@@ -38,10 +38,51 @@ export class FroniusAccessory implements AccessoryPlugin {
     this.lightbulbService = new hap.Service.Lightbulb(this.name);
     this.lightsensorService = new hap.Service.LightSensor(this.name);
 
+    this.lightbulbService
+      .getCharacteristic(hap.Characteristic.On)
+      .onGet(() => {
+        if (this.onValue instanceof Error) {
+          return null;
+        }
+
+        return this.onValue;
+      })
+      .onSet(() => {
+        if (this.onValue instanceof Error) {
+          return null;
+        }
+
+        return this.onValue;
+      });
+
+    this.lightbulbService
+      .getCharacteristic(hap.Characteristic.Brightness)
+      .onGet(() => {
+        if (this.brightnessValue instanceof Error) {
+          return null;
+        }
+
+        return this.brightnessValue;
+      })
+      .onSet(() => {
+        if (this.brightnessValue instanceof Error) {
+          return null;
+        }
+
+        return this.brightnessValue;
+      });
+
     this.lightsensorService
       .getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
       .setProps({
         minValue: 0, // allow minimum lux to be 0, otherwise defaults to 0.0001
+      })
+      .onGet(() => {
+        if (this.luxValue instanceof Error) {
+          return null;
+        }
+
+        return this.luxValue;
       });
 
     this.informationService = new hap.Service.AccessoryInformation()
