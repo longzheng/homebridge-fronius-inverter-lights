@@ -20,14 +20,19 @@ npm i -g homebridge-fronius-inverter-lights@latest
 
 ## Homebridge config
 
-```
+```javascript
     "platforms": [
         {
             "name": "Fronius inverter",
             "platform": "FroniusInverterLightsPlatform",
-            "inverterIp": "192.168.1.124", // IP address of your Fronius inverter
-            "pollInterval": 2 // polling frequency, in seconds
-            "pvMaxPower": 6000 // optional: shows the PV lightbulb brightness % as a proportion to the max PV capacity
+            "inverterIp": "192.168.1.124",
+            "pollInterval": 2,
+            "pvMaxPower": 6000
         },
 
 ```
+- `name` (required) the name of the plugin instance
+- `platform` (required) the name of the plugin, must be `FroniusInverterLightsPlatform`
+- `inverterIp` (required) the IP address of your Fronius inverter
+- `pollInterval` (required) the polling frequency in seconds
+- `pvMaxPower` (optional) the max capacity of your PV in watts (to show the PV lightbulb brightness % as a percentage of your max capacity)
