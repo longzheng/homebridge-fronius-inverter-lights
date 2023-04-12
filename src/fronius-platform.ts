@@ -73,6 +73,13 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
         this.pollInterval,
         this.pvMaxPower,
       ),
+      new FroniusAccessory(
+        hap,
+        this.log,
+        'Battery',
+        this.froniusApi,
+        this.pollInterval,
+      ),
     ]);
   }
 }
