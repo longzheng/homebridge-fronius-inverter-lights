@@ -28,7 +28,7 @@ npm i -g homebridge-fronius-inverter-lights@latest
             "inverterIp": "192.168.1.124",
             "pollInterval": 2,
             "pvMaxPower": 6000,
-            `battery`: false
+            "battery": false
         },
 
 ```
