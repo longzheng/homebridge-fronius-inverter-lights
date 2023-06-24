@@ -78,7 +78,7 @@ export interface Inverter {
   E_Total: number;
   E_Year: number;
   P: number;
-  SOC: number; // percentage load of Battery/Akku
+  SOC?: number; // percentage load of Battery/Akku
 }
 export interface Site {
   E_Day: number;
