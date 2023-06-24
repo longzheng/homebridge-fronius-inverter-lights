@@ -27,7 +27,8 @@ npm i -g homebridge-fronius-inverter-lights@latest
             "platform": "FroniusInverterLightsPlatform",
             "inverterIp": "192.168.1.124",
             "pollInterval": 2,
-            "pvMaxPower": 6000
+            "pvMaxPower": 6000,
+            `battery`: false
         },
 
 ```
@@ -36,3 +37,5 @@ npm i -g homebridge-fronius-inverter-lights@latest
 - `inverterIp` (required) the IP address of your Fronius inverter
 - `pollInterval` (required) the polling frequency in seconds
 - `pvMaxPower` (optional) the max capacity of your PV in watts (to show the PV lightbulb brightness % as a percentage of your max capacity)
+- `battery` (optional) enable battery accessory to show your battery SOC and usage
+- 
