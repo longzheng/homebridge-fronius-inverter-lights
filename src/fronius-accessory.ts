@@ -116,9 +116,9 @@ export class FroniusAccessory implements AccessoryPlugin {
       switch (this.metering) {
         case 'Export':
         case 'Import': {
-          const gridValue = data.P_Grid;
-          const autonomyValue = data.rel_Autonomy;
-          const selfConsumptionValue = data.rel_SelfConsumption || 100;
+          const gridValue = data.Site.P_Grid;
+          const autonomyValue = data.Site.rel_Autonomy;
+          const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
           const isImport = this.metering === 'Import';
 
           this.onValue =
@@ -135,14 +135,14 @@ export class FroniusAccessory implements AccessoryPlugin {
           break;
         }
         case 'Load': {
-          const loadValue = Math.abs(data.P_Load);
+          const loadValue = Math.abs(data.Site.P_Load);
           this.brightnessValue = 100;
           this.onValue = loadValue > 0;
           this.luxValue = loadValue;
           break;
         }
         case 'PV': {
-          const pvValue = data.P_PV;
+          const pvValue = data.Site.P_PV;
           this.brightnessValue = this.pvMaxPower
             ? Math.min(
               ((pvValue ?? 0) / this.pvMaxPower) * 100, // calculate PV output as a percentage of PV max power
@@ -154,9 +154,14 @@ export class FroniusAccessory implements AccessoryPlugin {
           break;
         }
         case 'Battery': {
-          const akkuValue = Math.abs(data.P_Akku);
-          this.brightnessValue = data.SOC;
-          this.onValue = data.P_Akku > 0; // is on, if P_Akku is positiv -> using energy out of Battery
+          const akkuValue = Math.abs(data.Site.P_Akku ?? 0);
+
+          // if the site has multiple inverters, average all the inverter SOCs
+          const socs = Object.values(data.Inverters).map(inv => inv.SOC ?? 0);
+          const socAvg = socs.reduce((a, b) => a + b, 0) / socs.length;
+
+          this.brightnessValue = socAvg;
+          this.onValue = akkuValue > 0; // if P_Akku is positive -> using energy out of Battery, turn on
           this.luxValue = akkuValue;
           break;
         }
