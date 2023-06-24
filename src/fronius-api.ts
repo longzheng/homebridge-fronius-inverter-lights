@@ -6,7 +6,7 @@ export class FroniusApi {
   private readonly http: AxiosInstance;
   private readonly inverterIp: string;
   private readonly log: Logging;
-  private request: Promise<Site | null> | undefined; // cache the current request to prevent concurrent requests
+  private request: Promise<Data | null> | undefined; // cache the current request to prevent concurrent requests
 
   constructor(inverterIp: string, log: Logging) {
     this.inverterIp = inverterIp;
@@ -41,7 +41,7 @@ export class FroniusApi {
           this.request = undefined;
 
           if (response.status === 200) {
-            return resolve(response.data.Body.Data.Site);
+            return resolve(response.data.Body.Data);
           } else {
             this.log.error(`Received invalid status code: ${response.status}`);
 
