@@ -24,6 +24,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   private readonly froniusApi: FroniusApi;
   private readonly pollInterval: number;
   private readonly pvMaxPower?: number;
+  private readonly battery?: boolean;
 
   constructor(log: Logging, config: PlatformConfig, api: API) {
     this.log = log;
@@ -34,6 +35,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
     this.froniusApi = new FroniusApi(pluginConfig.inverterIp, this.log);
     this.pollInterval = pluginConfig.pollInterval || 10;
     this.pvMaxPower = pluginConfig.pvMaxPower;
+    this.battery = pluginConfig.battery;
   }
 
   /*
@@ -43,7 +45,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
    * The set of exposed accessories CANNOT change over the lifetime of the plugin!
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
-    callback([
+    const accessories = [
       new FroniusAccessory(
         hap,
         this.log,
@@ -73,6 +75,20 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
         this.pollInterval,
         this.pvMaxPower,
       ),
-    ]);
+    ];
+
+    if (this.battery) {
+      accessories.push(
+        new FroniusAccessory(
+          hap,
+          this.log,
+          'Battery',
+          this.froniusApi,
+          this.pollInterval,
+        ),
+      );
+    }
+
+    callback(accessories);
   }
 }
