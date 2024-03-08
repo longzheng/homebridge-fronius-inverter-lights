@@ -82,7 +82,21 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
         new FroniusAccessory(
           hap,
           this.log,
-          'Battery',
+          'Battery charging',
+          this.froniusApi,
+          this.pollInterval,
+        ),
+        new FroniusAccessory(
+          hap,
+          this.log,
+          'Battery discharging',
+          this.froniusApi,
+          this.pollInterval,
+        ),
+        new FroniusAccessory(
+          hap,
+          this.log,
+          'Battery %',
           this.froniusApi,
           this.pollInterval,
         ),

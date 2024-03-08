@@ -1,7 +1,14 @@
 import { AccessoryPlugin, HAP, Logging, Service } from 'homebridge';
 import { FroniusApi } from './fronius-api';
 
-export type Metering = 'Import' | 'Export' | 'Load' | 'PV' | 'Battery';
+export type Metering =
+  | 'Import'
+  | 'Export'
+  | 'Load'
+  | 'PV'
+  | 'Battery charging'
+  | 'Battery discharging'
+  | 'Battery %';
 
 export class FroniusAccessory implements AccessoryPlugin {
   private readonly log: Logging;
@@ -113,6 +120,15 @@ export class FroniusAccessory implements AccessoryPlugin {
     const data = await this.froniusApi.getInverterData();
 
     if (data) {
+      // P_Akku should be positive when discharging and negative when charging
+      const batteryValue = data.Site.P_Akku ?? 0;
+      const batteryState =
+        batteryValue < 0
+          ? 'charging'
+          : batteryValue > 0
+            ? 'discharging'
+            : 'idle';
+
       switch (this.metering) {
         case 'Export':
         case 'Import': {
@@ -122,9 +138,11 @@ export class FroniusAccessory implements AccessoryPlugin {
           const isImport = this.metering === 'Import';
 
           this.onValue =
-            (isImport ? autonomyValue : selfConsumptionValue) < 100; // on/off is calculated whether autonomy/selfConsumption is less than 100
+            // on/off is calculated whether autonomy/selfConsumption is less than 100
+            (isImport ? autonomyValue : selfConsumptionValue) < 100;
           this.brightnessValue =
-            100 - (isImport ? autonomyValue : selfConsumptionValue); // percentage of import/export is calculated from 100 - autonomy/selfConsumption
+            // percentage of import/export is calculated from 100 - autonomy/selfConsumption
+            100 - (isImport ? autonomyValue : selfConsumptionValue);
           this.luxValue = isImport
             ? gridValue > 0
               ? gridValue
@@ -153,16 +171,26 @@ export class FroniusAccessory implements AccessoryPlugin {
           this.luxValue = pvValue ?? 0;
           break;
         }
-        case 'Battery': {
-          const akkuValue = Math.abs(data.Site.P_Akku ?? 0);
-
+        case 'Battery %': {
           // if the site has multiple inverters, average all the inverter SOCs
-          const socs = Object.values(data.Inverters).map(inv => inv.SOC ?? 0);
+          const socs = Object.values(data.Inverters).map((inv) => inv.SOC ?? 0);
           const socAvg = socs.reduce((a, b) => a + b, 0) / socs.length;
-
           this.brightnessValue = socAvg;
-          this.onValue = akkuValue > 0; // if P_Akku is positive -> using energy out of Battery, turn on
-          this.luxValue = akkuValue;
+          this.onValue = socAvg > 0;
+          break;
+        }
+        case 'Battery charging': {
+          const isCharging = batteryState === 'charging';
+          this.brightnessValue = isCharging ? 100 : 0;
+          this.onValue = isCharging;
+          this.luxValue = Math.abs(batteryValue);
+          break;
+        }
+        case 'Battery discharging': {
+          const isDischarging = batteryState === 'discharging';
+          this.brightnessValue = isDischarging ? 100 : 0;
+          this.onValue = isDischarging;
+          this.luxValue = Math.abs(batteryValue);
           break;
         }
       }
