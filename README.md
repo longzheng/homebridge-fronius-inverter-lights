@@ -6,6 +6,9 @@
   - Import - net import (lightbulb brightness % relative to solar generation)
   - Load - the amount of grid load
   - PV - the amount of solar generation (lightbulb brightness % relative to max PV capacity)
+  - (If battery) Battery % - the battery state of charge (average)
+  - (If battery) Battery charging - the battery charging rate
+  - (If battery) Battery discharging - the battery discharging rate
 - Lightbulb brightness lux represents watts
 
 ## Screenshots
