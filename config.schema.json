@@ -23,6 +23,11 @@
         "type": "integer",
         "required": false,
         "placeholder": "6000"
+      },
+      "battery": {
+        "title": "Show battery accessories",
+        "type": "boolean",
+        "default": false
       }
     }
   }
