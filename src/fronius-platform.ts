@@ -26,7 +26,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   private readonly pvMaxPower?: number;
   private readonly battery?: boolean;
 
-  constructor(log: Logging, config: PlatformConfig, api: API) {
+  constructor(log: Logging, config: PlatformConfig) {
     this.log = log;
 
     const pluginConfig = config as unknown as Config;
