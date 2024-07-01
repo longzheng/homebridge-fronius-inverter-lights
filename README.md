@@ -41,4 +41,11 @@ npm i -g homebridge-fronius-inverter-lights@latest
 - `pollInterval` (required) the polling frequency in seconds
 - `pvMaxPower` (optional) the max capacity of your PV in watts (to show the PV lightbulb brightness % as a percentage of your max capacity)
 - `battery` (optional) enable battery accessory to show your battery SOC and usage
-- 
+
+## Enable Solar API on newer Fronius inverters
+
+Some newer Fronius inverter models may disable access to the local Solar API by default, which you must manually enable before setting up this plugin.
+
+Login to the local web UI as **Customer** or **Technician** user, open the hamburger menu on the left, select **Communication**, select **Solar API**, then turn on **Activate communication via Solar API**, and finally select **Save**.
+
+![image](https://github.com/longzheng/homebridge-fronius-inverter-lights/assets/484912/df891cd0-beb0-4ff1-b184-e5734df9111b)
