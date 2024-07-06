@@ -45,64 +45,113 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
    * The set of exposed accessories CANNOT change over the lifetime of the plugin!
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
-    const accessories = [
-      new FroniusAccessory(
-        hap,
-        this.log,
-        'Import',
-        this.froniusApi,
-        this.pollInterval,
-      ),
-      new FroniusAccessory(
-        hap,
-        this.log,
-        'Export',
-        this.froniusApi,
-        this.pollInterval,
-      ),
-      new FroniusAccessory(
-        hap,
-        this.log,
-        'Load',
-        this.froniusApi,
-        this.pollInterval,
-      ),
-      new FroniusAccessory(
-        hap,
-        this.log,
-        'PV',
-        this.froniusApi,
-        this.pollInterval,
-        this.pvMaxPower,
-      ),
-    ];
+    (async () => {
+      const deviceMetdata = await this.getDeviceMetadata();
 
-    if (this.battery) {
-      accessories.push(
-        new FroniusAccessory(
+      const accessories = [
+        new FroniusAccessory({
           hap,
-          this.log,
-          'Battery charging',
-          this.froniusApi,
-          this.pollInterval,
-        ),
-        new FroniusAccessory(
+          log: this.log,
+          metering: 'Import',
+          froniusApi: this.froniusApi,
+          pollInterval: this.pollInterval,
+          model: deviceMetdata?.model,
+          serialNumber: deviceMetdata?.serialNumber,
+        }),
+        new FroniusAccessory({
           hap,
-          this.log,
-          'Battery discharging',
-          this.froniusApi,
-          this.pollInterval,
-        ),
-        new FroniusAccessory(
+          log: this.log,
+          metering: 'Export',
+          froniusApi: this.froniusApi,
+          pollInterval: this.pollInterval,
+          model: deviceMetdata?.model,
+          serialNumber: deviceMetdata?.serialNumber,
+        }),
+        new FroniusAccessory({
           hap,
-          this.log,
-          'Battery %',
-          this.froniusApi,
-          this.pollInterval,
-        ),
-      );
+          log: this.log,
+          metering: 'Load',
+          froniusApi: this.froniusApi,
+          pollInterval: this.pollInterval,
+          model: deviceMetdata?.model,
+          serialNumber: deviceMetdata?.serialNumber,
+        }),
+        new FroniusAccessory({
+          hap,
+          log: this.log,
+          metering: 'PV',
+          froniusApi: this.froniusApi,
+          pollInterval: this.pollInterval,
+          pvMaxPower: this.pvMaxPower,
+          model: deviceMetdata?.model,
+          serialNumber: deviceMetdata?.serialNumber,
+        }),
+      ];
+
+      if (this.battery) {
+        accessories.push(
+          new FroniusAccessory({
+            hap,
+            log: this.log,
+            metering: 'Battery charging',
+            froniusApi: this.froniusApi,
+            pollInterval: this.pollInterval,
+            model: deviceMetdata?.model,
+            serialNumber: deviceMetdata?.serialNumber,
+          }),
+          new FroniusAccessory({
+            hap,
+            log: this.log,
+            metering: 'Battery discharging',
+            froniusApi: this.froniusApi,
+            pollInterval: this.pollInterval,
+            model: deviceMetdata?.model,
+            serialNumber: deviceMetdata?.serialNumber,
+          }),
+          new FroniusAccessory({
+            hap,
+            log: this.log,
+            metering: 'Battery %',
+            froniusApi: this.froniusApi,
+            pollInterval: this.pollInterval,
+            model: deviceMetdata?.model,
+            serialNumber: deviceMetdata?.serialNumber,
+          }),
+        );
+      }
+
+      callback(accessories);
+    })();
+  }
+
+  private async getDeviceMetadata(): Promise<
+    { model: string; serialNumber: string } | undefined
+    > {
+    const [inverterInfo, deviceDbData] = await Promise.all([
+      (await this.froniusApi.getInverterInfo())?.Body.Data,
+      (await this.froniusApi.getDeviceDbData())?.Inverters,
+    ]);
+
+    if (!inverterInfo || !deviceDbData) {
+      return;
     }
 
-    callback(accessories);
+    const model = Object.values(inverterInfo)
+      .map((inverter) =>
+        deviceDbData[inverter.DT].ProductName
+          // remove Fronius from the name since it's already in the manufacturer field
+          .replace('Fronius', '')
+          .trim(),
+      )
+      .join(' & ');
+
+    const serialNumber = Object.values(inverterInfo)
+      .map((inverter) => inverter.UniqueID)
+      .join(' & ');
+
+    return {
+      model,
+      serialNumber,
+    };
   }
 }
