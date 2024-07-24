@@ -24,7 +24,6 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   private readonly log: Logging;
   private readonly froniusApi: FroniusApi;
   private readonly pollInterval: number;
-  private readonly pvMaxPower?: number;
   private readonly battery?: boolean;
 
   constructor(log: Logging, config: PlatformConfig) {
@@ -35,7 +34,6 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
     // probably parse config or something here
     this.froniusApi = new FroniusApi(pluginConfig.inverterIp, this.log);
     this.pollInterval = pluginConfig.pollInterval || 10;
-    this.pvMaxPower = pluginConfig.pvMaxPower;
     this.battery = pluginConfig.battery;
   }
 
@@ -47,7 +45,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     (async () => {
-      const deviceMetdata = await this.getDeviceMetadata();
+      const deviceMetadata = await this.getDeviceMetadata();
 
       const accessories = [
         new FroniusAccessory({
@@ -56,8 +54,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
           metering: 'Import',
           froniusApi: this.froniusApi,
           pollInterval: this.pollInterval,
-          model: deviceMetdata?.model,
-          serialNumber: deviceMetdata?.serialNumber,
+          model: deviceMetadata?.model,
+          serialNumber: deviceMetadata?.serialNumber,
         }),
         new FroniusAccessory({
           hap,
@@ -65,8 +63,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
           metering: 'Export',
           froniusApi: this.froniusApi,
           pollInterval: this.pollInterval,
-          model: deviceMetdata?.model,
-          serialNumber: deviceMetdata?.serialNumber,
+          model: deviceMetadata?.model,
+          serialNumber: deviceMetadata?.serialNumber,
         }),
         new FroniusAccessory({
           hap,
@@ -74,8 +72,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
           metering: 'Load',
           froniusApi: this.froniusApi,
           pollInterval: this.pollInterval,
-          model: deviceMetdata?.model,
-          serialNumber: deviceMetdata?.serialNumber,
+          model: deviceMetadata?.model,
+          serialNumber: deviceMetadata?.serialNumber,
         }),
         new FroniusAccessory({
           hap,
@@ -83,9 +81,9 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
           metering: 'PV',
           froniusApi: this.froniusApi,
           pollInterval: this.pollInterval,
-          pvMaxPower: this.pvMaxPower,
-          model: deviceMetdata?.model,
-          serialNumber: deviceMetdata?.serialNumber,
+          pvMaxPower: deviceMetadata?.pvPower,
+          model: deviceMetadata?.model,
+          serialNumber: deviceMetadata?.serialNumber,
         }),
       ];
 
@@ -97,8 +95,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
             metering: 'Battery charging',
             froniusApi: this.froniusApi,
             pollInterval: this.pollInterval,
-            model: deviceMetdata?.model,
-            serialNumber: deviceMetdata?.serialNumber,
+            model: deviceMetadata?.model,
+            serialNumber: deviceMetadata?.serialNumber,
           }),
           new FroniusAccessory({
             hap,
@@ -106,8 +104,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
             metering: 'Battery discharging',
             froniusApi: this.froniusApi,
             pollInterval: this.pollInterval,
-            model: deviceMetdata?.model,
-            serialNumber: deviceMetdata?.serialNumber,
+            model: deviceMetadata?.model,
+            serialNumber: deviceMetadata?.serialNumber,
           }),
           new FroniusAccessory({
             hap,
@@ -115,8 +113,8 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
             metering: 'Battery %',
             froniusApi: this.froniusApi,
             pollInterval: this.pollInterval,
-            model: deviceMetdata?.model,
-            serialNumber: deviceMetdata?.serialNumber,
+            model: deviceMetadata?.model,
+            serialNumber: deviceMetadata?.serialNumber,
           }),
         );
       }
@@ -126,7 +124,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   }
 
   private async getDeviceMetadata(): Promise<
-    { model: string; serialNumber: string } | undefined
+    { model: string; serialNumber: string, pvPower: number } | undefined
     > {
     const inverterInfo = (await this.froniusApi.getInverterInfo())?.Body.Data;
 
@@ -151,9 +149,15 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
       .map((inverter) => inverter.UniqueID)
       .join(' & ');
 
+    const pvPower = Object.values(inverterInfo).reduce(
+      (acc, inverter) => acc + inverter.PVPower ?? 0,
+      0,
+    );
+
     return {
       model,
       serialNumber,
+      pvPower,
     };
   }
 }
