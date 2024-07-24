@@ -73,12 +73,6 @@ export class FroniusApi {
 
     return this.requestWithDedup<InverterInfo>(url);
   };
-
-  public getDeviceDbData = async () => {
-    const url = `http://${this.inverterIp}/solar_api/v1/data/DeviceDB_Data.json`;
-
-    return this.requestWithDedup<DeviceDBData>(url);
-  };
 }
 type PowerFlowRealtimeData = {
   Body: {
@@ -139,16 +133,4 @@ type ResponseHead = {
     UserMessage: string;
   };
   Timestamp: string;
-};
-
-type DeviceDBData = {
-  Inverters: Record<
-    string,
-    {
-      ProductName: string;
-      DeviceFamily: string;
-      NominalPower: string;
-      PhaseCountAC: string;
-    }
-  >;
 };

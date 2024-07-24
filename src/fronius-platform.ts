@@ -9,6 +9,7 @@ import {
 import { Config } from './config';
 import { FroniusAccessory } from './fronius-accessory';
 import { FroniusApi } from './fronius-api';
+import { froniusDeviceTypes } from './fronius-deviceType';
 
 const PLATFORM_NAME = 'FroniusInverterLightsPlatform';
 let hap: HAP;
@@ -127,20 +128,17 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   private async getDeviceMetadata(): Promise<
     { model: string; serialNumber: string } | undefined
     > {
-    const [inverterInfo, deviceDbData] = await Promise.all([
-      (await this.froniusApi.getInverterInfo())?.Body.Data,
-      (await this.froniusApi.getDeviceDbData())?.Inverters,
-    ]);
+    const inverterInfo = (await this.froniusApi.getInverterInfo())?.Body.Data;
 
-    if (!inverterInfo || !deviceDbData) {
+    if (!inverterInfo) {
       return;
     }
 
     const model = Object.values(inverterInfo)
       .map((inverter) =>
-        deviceDbData[inverter.DT].ProductName
+        froniusDeviceTypes[inverter.DT]
           // remove Fronius from the name since it's already in the manufacturer field
-          .replace('Fronius', '')
+          ?.replace('Fronius', '')
           .trim(),
       )
       .join(' & ');
