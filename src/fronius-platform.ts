@@ -134,14 +134,18 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
       return;
     }
 
-    const model = Object.values(inverterInfo)
-      .map((inverter) =>
-        froniusDeviceTypes[inverter.DT]
-          // remove Fronius from the name since it's already in the manufacturer field
-          ?.replace('Fronius', '')
-          .trim(),
-      )
-      .join(' & ');
+    const model = Array.from(
+      // dedduplicate multiple inverters
+      new Set(
+        Object.values(inverterInfo).map(
+          (inverter) =>
+            froniusDeviceTypes[inverter.DT]
+              // remove Fronius from the name since it's already in the manufacturer field
+              ?.replace('Fronius', '')
+              .trim() ?? 'Unknown inverter',
+        ),
+      ),
+    ).join(' & ');
 
     const serialNumber = Object.values(inverterInfo)
       .map((inverter) => inverter.UniqueID)
