@@ -1,6 +1,6 @@
 {
   "name": "homebridge-fronius-inverter-lights",
-  "version": "1.7.0-beta.2",
+  "version": "1.7.0",
   "description": "Homebridge plugin for Fronius inverter with smart meter as a lightbulb accessory",
   "main": "dist/fronius-platform.js",
   "scripts": {
