@@ -6,7 +6,7 @@ export class FroniusApi {
   private readonly http: AxiosInstance;
   private readonly inverterIp: string;
   private readonly log: Logging;
-  private request: Promise<Data | null> | undefined; // cache the current request to prevent concurrent requests
+  private requestQueue = new Map<string, Promise<unknown>>();
 
   constructor(inverterIp: string, log: Logging) {
     this.inverterIp = inverterIp;
@@ -23,83 +23,114 @@ export class FroniusApi {
     });
   }
 
-  public getInverterData = async () => {
+  private requestWithDedup = async <T>(url: string): Promise<T | null> => {
+    const existingRequest = this.requestQueue.get(url) as Promise<T | null>;
+
     // if request is already in operation, return the previous request
-    if (this.request) {
-      return this.request;
+    if (existingRequest) {
+      return existingRequest;
     }
 
-    this.request = new Promise((resolve) => {
-      const url = `http://${this.inverterIp}/solar_api/v1/GetPowerFlowRealtimeData.fcgi`;
-
-      this.log.debug(`Getting inverter data: ${url}`);
+    const request = new Promise<T | null>((resolve) => {
+      this.log.debug(`Making request: ${url}`);
 
       this.http
-        .get<FroniusRealtimeData>(url)
+        .get<T>(url)
         .then((response) => {
-          // clear existing request
-          this.request = undefined;
-
-          if (response.status === 200) {
-            return resolve(response.data.Body.Data);
-          } else {
-            this.log.error(`Received invalid status code: ${response.status}`);
+          if (response.status !== 200) {
+            this.log.error(
+              `${url}: received invalid status code: ${response.status}`,
+            );
 
             return resolve(null);
           }
+
+          return resolve(response.data);
         })
         .catch((error: Error) => {
           this.log.error(error.message);
 
-          this.request = undefined;
           return resolve(null);
+        })
+        .finally(() => {
+          this.requestQueue.delete(url);
         });
     });
 
-    return this.request;
+    this.requestQueue.set(url, request);
+
+    return request;
+  };
+
+  public getPowerFlowRealtimeData = async () => {
+    const url = `http://${this.inverterIp}/solar_api/v1/GetPowerFlowRealtimeData.fcgi`;
+
+    return this.requestWithDedup<PowerFlowRealtimeData>(url);
+  };
+
+  public getInverterInfo = async () => {
+    const url = `http://${this.inverterIp}/solar_api/v1/GetInverterInfo.cgi`;
+
+    return this.requestWithDedup<InverterInfo>(url);
   };
 }
+type PowerFlowRealtimeData = {
+  Body: {
+    Data: {
+      Inverters: Record<
+        string,
+        {
+          DT: number;
+          E_Day: number;
+          E_Total: number;
+          E_Year: number;
+          P: number;
+          SOC?: number;
+        }
+      >;
+      Site: {
+        E_Day: number;
+        E_Total: number;
+        E_Year: number;
+        Meter_Location: string;
+        Mode: string;
+        P_Akku: number | null;
+        P_Grid: number;
+        P_Load: number;
+        P_PV: number | null;
+        rel_Autonomy: number;
+        rel_SelfConsumption: number | null;
+      };
+      Version: string;
+    };
+  };
+  Head: ResponseHead;
+};
 
-export interface FroniusRealtimeData {
-  Body: Body;
-  Head: Head;
-}
-export interface Body {
-  Data: Data;
-}
-export interface Data {
-  Inverters: Record<string, Inverter>;
-  Site: Site;
-  Version: string;
-}
-export interface Inverter {
-  DT: number;
-  E_Day: number;
-  E_Total: number;
-  E_Year: number;
-  P: number;
-  SOC?: number; // percentage load of Battery/Akku
-}
-export interface Site {
-  E_Day: number;
-  E_Total: number;
-  E_Year: number;
-  Meter_Location: string;
-  Mode: string;
-  P_Akku: number | null;
-  P_Grid: number;
-  P_Load: number;
-  P_PV: number | null;
-  rel_Autonomy: number;
-  rel_SelfConsumption: number | null;
-}
-export interface Head {
+type InverterInfo = {
+  Body: {
+    Data: Record<
+      string,
+      {
+        CustomName: string;
+        DT: number;
+        ErrorCode: number;
+        PVPower: number;
+        Show: number;
+        StatusCode: number;
+        UniqueID: string;
+      }
+    >;
+  };
+  Head: ResponseHead;
+};
+
+type ResponseHead = {
   RequestArguments: Record<string, unknown>;
-  Status: Status;
+  Status: {
+    Code: number;
+    Reason: string;
+    UserMessage: string;
+  };
   Timestamp: string;
-}
-export interface Status {
-  Code: number;
-  Reason: string;
-  UserMessage: string;
-}
+};

@@ -17,13 +17,6 @@
         "required": true,
         "default": 10
       },
-      "pvMaxPower": {
-        "title": "PV max power capacity (watts)",
-        "description": "If configured, shows the PV lightbulb brightness % as a proportion to the max PV capacity",
-        "type": "integer",
-        "required": false,
-        "placeholder": "6000"
-      },
       "battery": {
         "title": "Show battery accessories",
         "type": "boolean",

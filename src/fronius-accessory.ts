@@ -26,14 +26,25 @@ export class FroniusAccessory implements AccessoryPlugin {
   private brightnessValue: number | Error = 0;
   private luxValue: number | Error = 0;
 
-  constructor(
-    hap: HAP,
-    log: Logging,
-    metering: Metering,
-    froniusApi: FroniusApi,
-    pollInterval: number,
-    pvMaxPower?: number,
-  ) {
+  constructor({
+    hap,
+    log,
+    metering,
+    froniusApi,
+    pollInterval,
+    pvMaxPower,
+    model,
+    serialNumber,
+  }: {
+    hap: HAP;
+    log: Logging;
+    metering: Metering;
+    froniusApi: FroniusApi;
+    pollInterval: number;
+    pvMaxPower?: number;
+    model?: string;
+    serialNumber?: string;
+  }) {
     this.hap = hap;
     this.log = log;
     this.name = metering.toString();
@@ -92,9 +103,25 @@ export class FroniusAccessory implements AccessoryPlugin {
         return this.luxValue;
       });
 
-    this.informationService = new hap.Service.AccessoryInformation()
-      .setCharacteristic(hap.Characteristic.Manufacturer, 'Fronius')
-      .setCharacteristic(hap.Characteristic.Model, 'Inverter');
+    this.informationService =
+      new hap.Service.AccessoryInformation().setCharacteristic(
+        hap.Characteristic.Manufacturer,
+        'Fronius',
+      );
+
+    if (model) {
+      this.informationService.setCharacteristic(
+        hap.Characteristic.Model,
+        model,
+      );
+    }
+
+    if (serialNumber) {
+      this.informationService.setCharacteristic(
+        hap.Characteristic.SerialNumber,
+        serialNumber,
+      );
+    }
 
     setInterval(async () => {
       await this.scheduledUpdate();
@@ -117,87 +144,84 @@ export class FroniusAccessory implements AccessoryPlugin {
   }
 
   async updateValues() {
-    const data = await this.froniusApi.getInverterData();
+    const data = (await this.froniusApi.getPowerFlowRealtimeData())?.Body.Data;
 
-    if (data) {
-      // P_Akku should be positive when discharging and negative when charging
-      const batteryValue = data.Site.P_Akku ?? 0;
-      const batteryState =
-        batteryValue < 0
-          ? 'charging'
-          : batteryValue > 0
-            ? 'discharging'
-            : 'idle';
-
-      switch (this.metering) {
-        case 'Export':
-        case 'Import': {
-          const gridValue = data.Site.P_Grid;
-          const autonomyValue = data.Site.rel_Autonomy;
-          const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
-          const isImport = this.metering === 'Import';
-
-          this.onValue =
-            // on/off is calculated whether autonomy/selfConsumption is less than 100
-            (isImport ? autonomyValue : selfConsumptionValue) < 100;
-          this.brightnessValue =
-            // percentage of import/export is calculated from 100 - autonomy/selfConsumption
-            100 - (isImport ? autonomyValue : selfConsumptionValue);
-          this.luxValue = isImport
-            ? gridValue > 0
-              ? gridValue
-              : 0 // import watts, value must be positive
-            : gridValue < 0
-              ? -gridValue
-              : 0; // export watts, value must be negative
-          break;
-        }
-        case 'Load': {
-          const loadValue = Math.abs(data.Site.P_Load);
-          this.brightnessValue = 100;
-          this.onValue = loadValue > 0;
-          this.luxValue = loadValue;
-          break;
-        }
-        case 'PV': {
-          const pvValue = data.Site.P_PV;
-          this.brightnessValue = this.pvMaxPower
-            ? Math.min(
-              ((pvValue ?? 0) / this.pvMaxPower) * 100, // calculate PV output as a percentage of PV max power
-              100,
-            ) // cap to 100%
-            : 100;
-          this.onValue = pvValue !== null;
-          this.luxValue = pvValue ?? 0;
-          break;
-        }
-        case 'Battery %': {
-          // if the site has multiple inverters, average all the inverter SOCs
-          const socs = Object.values(data.Inverters).map((inv) => inv.SOC ?? 0);
-          const socAvg = socs.reduce((a, b) => a + b, 0) / socs.length;
-          this.brightnessValue = socAvg;
-          this.onValue = socAvg > 0;
-          break;
-        }
-        case 'Battery charging': {
-          const isCharging = batteryState === 'charging';
-          this.brightnessValue = isCharging ? 100 : 0;
-          this.onValue = isCharging;
-          this.luxValue = Math.abs(batteryValue);
-          break;
-        }
-        case 'Battery discharging': {
-          const isDischarging = batteryState === 'discharging';
-          this.brightnessValue = isDischarging ? 100 : 0;
-          this.onValue = isDischarging;
-          this.luxValue = Math.abs(batteryValue);
-          break;
-        }
-      }
-    } else {
+    if (!data) {
       this.onValue = new Error('Error fetching value');
       this.brightnessValue = new Error('Error fetching value');
       this.luxValue = new Error('Error fetching value');
+      return;
+    }
+
+    // P_Akku should be positive when discharging and negative when charging
+    const batteryValue = data.Site.P_Akku ?? 0;
+    const batteryState =
+      batteryValue < 0 ? 'charging' : batteryValue > 0 ? 'discharging' : 'idle';
+
+    switch (this.metering) {
+      case 'Export':
+      case 'Import': {
+        const gridValue = data.Site.P_Grid;
+        const autonomyValue = data.Site.rel_Autonomy;
+        const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
+        const isImport = this.metering === 'Import';
+
+        this.onValue =
+          // on/off is calculated whether autonomy/selfConsumption is less than 100
+          (isImport ? autonomyValue : selfConsumptionValue) < 100;
+        this.brightnessValue =
+          // percentage of import/export is calculated from 100 - autonomy/selfConsumption
+          100 - (isImport ? autonomyValue : selfConsumptionValue);
+        this.luxValue = isImport
+          ? gridValue > 0
+            ? gridValue
+            : 0 // import watts, value must be positive
+          : gridValue < 0
+            ? -gridValue
+            : 0; // export watts, value must be negative
+        break;
+      }
+      case 'Load': {
+        const loadValue = Math.abs(data.Site.P_Load);
+        this.brightnessValue = 100;
+        this.onValue = loadValue > 0;
+        this.luxValue = loadValue;
+        break;
+      }
+      case 'PV': {
+        const pvValue = data.Site.P_PV;
+        this.brightnessValue = this.pvMaxPower
+          ? Math.min(
+            ((pvValue ?? 0) / this.pvMaxPower) * 100, // calculate PV output as a percentage of PV max power
+            100,
+          ) // cap to 100%
+          : 100;
+        this.onValue = pvValue !== null;
+        this.luxValue = pvValue ?? 0;
+        break;
+      }
+      case 'Battery %': {
+        // if the site has multiple inverters, average all the inverter SOCs
+        const socs = Object.values(data.Inverters).map((inv) => inv.SOC ?? 0);
+        const socAvg = socs.reduce((a, b) => a + b, 0) / socs.length;
+        this.brightnessValue = socAvg;
+        this.onValue = socAvg > 0;
+        break;
+      }
+      case 'Battery charging': {
+        const isCharging = batteryState === 'charging';
+        this.brightnessValue = isCharging ? 100 : 0;
+        this.onValue = isCharging;
+        this.luxValue = Math.abs(batteryValue);
+        break;
+      }
+      case 'Battery discharging': {
+        const isDischarging = batteryState === 'discharging';
+        this.brightnessValue = isDischarging ? 100 : 0;
+        this.onValue = isDischarging;
+        this.luxValue = Math.abs(batteryValue);
+        break;
+      }
     }
   }
 
