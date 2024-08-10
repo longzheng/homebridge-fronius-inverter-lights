@@ -133,7 +133,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
     }
 
     const model = Array.from(
-      // dedduplicate multiple inverters
+      // deduplicate multiple inverters
       new Set(
         Object.values(inverterInfo).map(
           (inverter) =>
