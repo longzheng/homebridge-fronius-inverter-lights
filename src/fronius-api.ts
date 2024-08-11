@@ -25,13 +25,13 @@ export class FroniusApi {
   public getPowerFlowRealtimeData = async () => {
     const url = `http://${this.inverterIp}/solar_api/v1/GetPowerFlowRealtimeData.fcgi`;
 
-    return this.http.get<PowerFlowRealtimeData>(url);
+    return (await this.http.get<PowerFlowRealtimeData>(url)).data;
   };
 
   public getInverterInfo = async () => {
     const url = `http://${this.inverterIp}/solar_api/v1/GetInverterInfo.cgi`;
 
-    return this.http.get<InverterInfo>(url);
+    return (await this.http.get<InverterInfo>(url)).data;
   };
 }
 
