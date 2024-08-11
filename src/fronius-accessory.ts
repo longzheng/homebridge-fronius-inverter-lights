@@ -161,7 +161,7 @@ export class FroniusAccessory implements AccessoryPlugin {
     switch (this.metering) {
       case 'Export': {
         const gridValue = data.Site.P_Grid;
-        const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
+        const selfConsumptionValue = data.Site.rel_SelfConsumption ?? 100;
 
         this.onValue =
           // on/off is calculated whether selfConsumption is less than 100
