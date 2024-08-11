@@ -1,79 +1,40 @@
 import { Logging } from 'homebridge';
 import axios, { AxiosInstance } from 'axios';
-import { setupCache } from 'axios-cache-adapter';
+import { setupCache } from 'axios-cache-interceptor';
 
 export class FroniusApi {
   private readonly http: AxiosInstance;
   private readonly inverterIp: string;
   private readonly log: Logging;
-  private requestQueue = new Map<string, Promise<unknown>>();
 
   constructor(inverterIp: string, log: Logging) {
     this.inverterIp = inverterIp;
     this.log = log;
 
-    // cache API responses for 1 second
-    const cache = setupCache({
-      maxAge: 1 * 1000,
-    });
-
-    this.http = axios.create({
+    const instance = axios.create({
       timeout: 2000,
-      adapter: cache.adapter,
+    });
+    
+    this.http = setupCache(instance, {
+      // force cache API responses for 1 second
+      // ignore the HTTP response Cache-Control header
+      headerInterpreter: () => 1 * 1000,
     });
   }
-
-  private requestWithDedup = async <T>(url: string): Promise<T | null> => {
-    const existingRequest = this.requestQueue.get(url) as Promise<T | null>;
-
-    // if request is already in operation, return the previous request
-    if (existingRequest) {
-      return existingRequest;
-    }
-
-    const request = new Promise<T | null>((resolve) => {
-      this.log.debug(`Making request: ${url}`);
-
-      this.http
-        .get<T>(url)
-        .then((response) => {
-          if (response.status !== 200) {
-            this.log.error(
-              `${url}: received invalid status code: ${response.status}`,
-            );
-
-            return resolve(null);
-          }
-
-          return resolve(response.data);
-        })
-        .catch((error: Error) => {
-          this.log.error(error.message);
-
-          return resolve(null);
-        })
-        .finally(() => {
-          this.requestQueue.delete(url);
-        });
-    });
-
-    this.requestQueue.set(url, request);
-
-    return request;
-  };
 
   public getPowerFlowRealtimeData = async () => {
     const url = `http://${this.inverterIp}/solar_api/v1/GetPowerFlowRealtimeData.fcgi`;
 
-    return this.requestWithDedup<PowerFlowRealtimeData>(url);
+    return this.http.get<PowerFlowRealtimeData>(url);
   };
 
   public getInverterInfo = async () => {
     const url = `http://${this.inverterIp}/solar_api/v1/GetInverterInfo.cgi`;
 
-    return this.requestWithDedup<InverterInfo>(url);
+    return this.http.get<InverterInfo>(url);
   };
 }
+
 type PowerFlowRealtimeData = {
   Body: {
     Data: {
