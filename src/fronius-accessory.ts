@@ -159,26 +159,34 @@ export class FroniusAccessory implements AccessoryPlugin {
       batteryValue < 0 ? 'charging' : batteryValue > 0 ? 'discharging' : 'idle';
 
     switch (this.metering) {
-      case 'Export':
+      case 'Export': {
+        const gridValue = data.Site.P_Grid;
+        const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
+
+        this.onValue =
+          // on/off is calculated whether selfConsumption is less than 100
+          selfConsumptionValue < 100;
+        this.brightnessValue =
+          // percentage of export is calculated from 100 - selfConsumption
+          100 - selfConsumptionValue;
+        this.luxValue = gridValue < 0
+          ? -gridValue // export watts, value must be negative
+          : 0;
+        break;
+      }
       case 'Import': {
         const gridValue = data.Site.P_Grid;
         const autonomyValue = data.Site.rel_Autonomy;
-        const selfConsumptionValue = data.Site.rel_SelfConsumption || 100;
-        const isImport = this.metering === 'Import';
-
+        
         this.onValue =
-          // on/off is calculated whether autonomy/selfConsumption is less than 100
-          (isImport ? autonomyValue : selfConsumptionValue) < 100;
+          // on/off is calculated whether autonomy is less than 100
+          autonomyValue < 100;
         this.brightnessValue =
-          // percentage of import/export is calculated from 100 - autonomy/selfConsumption
-          100 - (isImport ? autonomyValue : selfConsumptionValue);
-        this.luxValue = isImport
-          ? gridValue > 0
-            ? gridValue
-            : 0 // import watts, value must be positive
-          : gridValue < 0
-            ? -gridValue
-            : 0; // export watts, value must be negative
+          // percentage of import/export is calculated from 100 - autonomy
+          100 - autonomyValue;
+        this.luxValue = gridValue > 0
+          ? gridValue // import watts, value must be positive
+          : 0; 
         break;
       }
       case 'Load': {
