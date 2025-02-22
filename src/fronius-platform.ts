@@ -124,7 +124,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
   }
 
   private async getDeviceMetadata(): Promise<
-    { model: string; serialNumber: string, pvPower: number } | undefined
+    { model: string; serialNumber: string; pvPower: number } | undefined
     > {
     const inverterInfo = (await this.froniusApi.getInverterInfo())?.Body.Data;
 
@@ -150,7 +150,7 @@ class FroniusInverterLightsStaticPlatform implements StaticPlatformPlugin {
       .join(' & ');
 
     const pvPower = Object.values(inverterInfo).reduce(
-      (acc, inverter) => acc + inverter.PVPower ?? 0,
+      (acc, inverter) => acc + inverter.PVPower,
       0,
     );
 

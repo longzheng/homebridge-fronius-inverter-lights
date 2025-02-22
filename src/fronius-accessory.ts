@@ -144,7 +144,14 @@ export class FroniusAccessory implements AccessoryPlugin {
   }
 
   async updateValues() {
-    const data = (await this.froniusApi.getPowerFlowRealtimeData())?.Body.Data;
+    const data = await (async () => {
+      try {
+        return (await this.froniusApi.getPowerFlowRealtimeData())?.Body.Data;
+      } catch (e) {
+        this.log.error('Error fetching power flow realtime data: ' + e);
+        return null;
+      }
+    })();
 
     if (!data) {
       this.onValue = new Error('Error fetching value');
@@ -169,24 +176,26 @@ export class FroniusAccessory implements AccessoryPlugin {
         this.brightnessValue =
           // percentage of export is calculated from 100 - selfConsumption
           100 - selfConsumptionValue;
-        this.luxValue = gridValue < 0
-          ? -gridValue // export watts, value must be negative
-          : 0;
+        this.luxValue =
+          gridValue < 0
+            ? -gridValue // export watts, value must be negative
+            : 0;
         break;
       }
       case 'Import': {
         const gridValue = data.Site.P_Grid;
         const autonomyValue = data.Site.rel_Autonomy;
-        
+
         this.onValue =
           // on/off is calculated whether autonomy is less than 100
           autonomyValue < 100;
         this.brightnessValue =
           // percentage of import/export is calculated from 100 - autonomy
           100 - autonomyValue;
-        this.luxValue = gridValue > 0
-          ? gridValue // import watts, value must be positive
-          : 0; 
+        this.luxValue =
+          gridValue > 0
+            ? gridValue // import watts, value must be positive
+            : 0;
         break;
       }
       case 'Load': {
